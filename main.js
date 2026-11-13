@@ -1,10 +1,13 @@
-// main.js - Práctico 4: guardar (INSERT) y mostrar (SELECT) las recomendaciones
+// main.js - Práctico 5: CRUD completo (crear, leer, editar y eliminar)
 // "supabase" es el cliente ya conectado (lo crea supabaseClient.js, que se carga antes).
 
 const form = document.getElementById('form-juego');
 const grid = document.getElementById('grid-juegos');
 const mensaje = document.getElementById('mensaje');
-const boton = form.querySelector('button[type="submit"]');
+const inputId = document.getElementById('juego-id');       // campo oculto
+const tituloForm = document.getElementById('titulo-form');
+const btnSubmit = document.getElementById('btn-submit');
+const btnCancelar = document.getElementById('btn-cancelar');
 
 // Imagen de reemplazo si la URL de la portada no carga
 const IMG_RESPALDO =
@@ -21,7 +24,6 @@ function mostrarMensaje(texto, tipo) {
   mensaje.className = 'mensaje ' + tipo; // "info", "exito" o "error"
 }
 
-// Mensaje dentro del catálogo (vacío / error)
 function mostrarEstadoCatalogo(texto) {
   grid.innerHTML = '';
   const p = document.createElement('p');
@@ -30,7 +32,7 @@ function mostrarEstadoCatalogo(texto) {
   grid.appendChild(p);
 }
 
-// Arma una tarjeta <article> con el DOM (textContent evita inyectar HTML)
+// ---------- Tarjeta con botones Editar / Eliminar ----------
 function crearTarjeta(juego) {
   const card = document.createElement('article');
   card.className = 'card-juego';
@@ -64,12 +66,30 @@ function crearTarjeta(juego) {
   resena.className = 'resena';
   resena.textContent = juego.resena;
 
-  cuerpo.append(titulo, meta, resena);
+  // Botones de acción
+  const acciones = document.createElement('div');
+  acciones.className = 'card-actions';
+
+  const btnEditar = document.createElement('button');
+  btnEditar.type = 'button';
+  btnEditar.className = 'btn-action btn-edit';
+  btnEditar.textContent = '✏️ Editar';
+  btnEditar.addEventListener('click', () => prepararEdicion(juego.id));
+
+  const btnEliminar = document.createElement('button');
+  btnEliminar.type = 'button';
+  btnEliminar.className = 'btn-action btn-delete';
+  btnEliminar.textContent = '🗑️ Eliminar';
+  btnEliminar.addEventListener('click', () => eliminarJuego(juego.id));
+
+  acciones.append(btnEditar, btnEliminar);
+
+  cuerpo.append(titulo, meta, resena, acciones);
   card.append(img, cuerpo);
   return card;
 }
 
-// SELECT: trae los juegos (el más nuevo primero) y dibuja las tarjetas
+// ---------- SELECT ----------
 async function cargarJuegos() {
   const { data, error } = await supabase
     .from('juegos')
@@ -91,11 +111,83 @@ async function cargarJuegos() {
   data.forEach((juego) => grid.appendChild(crearTarjeta(juego)));
 }
 
-// INSERT: guarda el juego y vuelve a cargar el catálogo
-form.addEventListener('submit', async (e) => {
-  e.preventDefault(); // evita que la página se recargue
+// ---------- DELETE ----------
+async function eliminarJuego(id) {
+  const confirmacion = confirm('¿Estás seguro de que querés eliminar esta recomendación?');
+  if (!confirmacion) return;
 
-  const nuevoJuego = {
+  try {
+    const { error } = await supabase.from('juegos').delete().eq('id', id);
+    if (error) throw new Error('Error al eliminar: ' + error.message);
+
+    mostrarMensaje('Recomendación eliminada con éxito.', 'exito');
+
+    // Si justo se borró el juego que se estaba editando, reseteamos el formulario
+    if (inputId.value == id) {
+      cancelarEdicion();
+    }
+
+    await cargarJuegos();
+  } catch (err) {
+    console.error(err);
+    mostrarMensaje(err.message, 'error');
+  }
+}
+
+// ---------- Preparar el formulario para editar ----------
+async function prepararEdicion(id) {
+  try {
+    // 1. Buscar los datos actuales del registro
+    const { data: juego, error } = await supabase
+      .from('juegos')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error) throw error;
+
+    // 2. Cargarlos en el formulario
+    inputId.value = juego.id; // el campo oculto guarda el ID
+    document.getElementById('titulo').value = juego.titulo;
+    document.getElementById('genero').value = juego.genero;
+    document.getElementById('puntuacion').value = juego.puntuacion;
+    document.getElementById('resena').value = juego.resena;
+    document.getElementById('portada').value = juego.portada;
+    document.getElementById('porque').value = juego.porque;
+
+    // 3. Avisar al usuario que está editando
+    tituloForm.textContent = 'Editar recomendación';
+    btnSubmit.textContent = 'Guardar cambios';
+    btnCancelar.hidden = false;
+    mostrarMensaje('', '');
+
+    // 4. Subir la pantalla hasta el formulario
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    console.error(err);
+    mostrarMensaje('No se pudo cargar el juego para editar: ' + err.message, 'error');
+  }
+}
+
+// ---------- Volver el formulario al modo "crear" ----------
+function cancelarEdicion() {
+  form.reset();
+  inputId.value = '';
+  tituloForm.textContent = 'Recomendá un juego';
+  btnSubmit.textContent = 'Publicar recomendación';
+  btnCancelar.hidden = true;
+}
+
+btnCancelar.addEventListener('click', () => {
+  cancelarEdicion();
+  mostrarMensaje('', '');
+});
+
+// ---------- INSERT o UPDATE según el campo oculto ----------
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const id = inputId.value; // vacío = nuevo, con número = edición
+  const datos = {
     titulo: document.getElementById('titulo').value.trim(),
     genero: document.getElementById('genero').value,
     puntuacion: Number(document.getElementById('puntuacion').value),
@@ -104,25 +196,33 @@ form.addEventListener('submit', async (e) => {
     porque: document.getElementById('porque').value.trim()
   };
 
-  boton.disabled = true;
-  boton.textContent = 'Guardando...';
-  mostrarMensaje('Guardando tu recomendación...', 'info');
+  btnSubmit.disabled = true;
+  btnSubmit.textContent = 'Guardando...';
+  mostrarMensaje('Guardando...', 'info');
 
   try {
-    const { error } = await supabase.from('juegos').insert([nuevoJuego]);
-    if (error) throw error;
+    if (id) {
+      // --- MODO UPDATE ---
+      const { error } = await supabase.from('juegos').update(datos).eq('id', id);
+      if (error) throw error;
+      mostrarMensaje('¡Recomendación actualizada con éxito!', 'exito');
+    } else {
+      // --- MODO INSERT ---
+      const { error } = await supabase.from('juegos').insert([datos]);
+      if (error) throw error;
+      mostrarMensaje('¡Recomendación publicada con éxito!', 'exito');
+    }
 
-    mostrarMensaje('¡Recomendación publicada con éxito!', 'exito');
-    form.reset();
-    await cargarJuegos(); // la tarjeta nueva aparece enseguida
+    cancelarEdicion();       // restaura el formulario
+    await cargarJuegos();    // recarga las tarjetas
   } catch (err) {
     console.error('Error al guardar:', err);
-    mostrarMensaje('No se pudo guardar la recomendación: ' + err.message, 'error');
+    mostrarMensaje('No se pudo guardar: ' + err.message, 'error');
   } finally {
-    boton.disabled = false;
-    boton.textContent = 'Publicar recomendación';
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = inputId.value ? 'Guardar cambios' : 'Publicar recomendación';
   }
 });
 
-// Al abrir la página, mostrar lo que ya está guardado
+// Al abrir la página, mostrar lo guardado
 cargarJuegos();

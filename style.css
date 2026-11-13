@@ -304,3 +304,65 @@ textarea {
   font-size: 0.92rem;
   line-height: 1.5;
 }
+
+/* Botones Editar / Eliminar y Cancelar edición (Práctico 5) */
+.card-body {
+  flex: 1;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.btn-action {
+  flex: 1;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-edit {
+  background: #6d4bd1;
+}
+
+.btn-edit:hover {
+  background: #5838ba;
+}
+
+.btn-delete {
+  background: #dc3a3a;
+}
+
+.btn-delete:hover {
+  background: #b92c2c;
+}
+
+.btn-secondary {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px 18px;
+  border: 1px solid #d5d7e1;
+  border-radius: 9px;
+  background: #fff;
+  color: #383b50;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #f3f4f8;
+}
+
+.btn-secondary[hidden] {
+  display: none;
+}

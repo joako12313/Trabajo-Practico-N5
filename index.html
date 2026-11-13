@@ -25,10 +25,13 @@
 
   <main class="container">
     <section id="formulario" class="card-form">
-      <h1>Recomendá un juego</h1>
+      <h1 id="titulo-form">Recomendá un juego</h1>
       <p class="subtitle">Compartí con la comunidad tus juegos favoritos</p>
 
       <form id="form-juego">
+        <!-- Campo oculto: vacío = crear (INSERT), con número = editar (UPDATE) -->
+        <input type="hidden" id="juego-id" value="">
+
         <div class="form-group">
           <label for="titulo">Título del juego</label>
           <input type="text" id="titulo" name="titulo" placeholder="Ej: The Legend of Zelda" required>
@@ -69,7 +72,8 @@
 
         <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
 
-        <button type="submit" class="btn-primary">Publicar recomendación</button>
+        <button type="submit" id="btn-submit" class="btn-primary">Publicar recomendación</button>
+        <button type="button" id="btn-cancelar" class="btn-secondary" hidden>Cancelar edición</button>
       </form>
     </section>
 
