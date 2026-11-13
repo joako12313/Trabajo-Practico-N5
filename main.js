@@ -1,15 +1,12 @@
-// main.js - Práctico 5: CRUD completo (crear, leer, editar y eliminar)
-// "supabase" es el cliente ya conectado (lo crea supabaseClient.js, que se carga antes).
-
 const form = document.getElementById('form-juego');
 const grid = document.getElementById('grid-juegos');
 const mensaje = document.getElementById('mensaje');
-const inputId = document.getElementById('juego-id');       // campo oculto
+const inputId = document.getElementById('juego-id');       
 const tituloForm = document.getElementById('titulo-form');
 const btnSubmit = document.getElementById('btn-submit');
 const btnCancelar = document.getElementById('btn-cancelar');
 
-// Imagen de reemplazo si la URL de la portada no carga
+
 const IMG_RESPALDO =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
@@ -21,7 +18,7 @@ const IMG_RESPALDO =
 
 function mostrarMensaje(texto, tipo) {
   mensaje.textContent = texto;
-  mensaje.className = 'mensaje ' + tipo; // "info", "exito" o "error"
+  mensaje.className = 'mensaje ' + tipo; 
 }
 
 function mostrarEstadoCatalogo(texto) {
@@ -32,7 +29,6 @@ function mostrarEstadoCatalogo(texto) {
   grid.appendChild(p);
 }
 
-// ---------- Tarjeta con botones Editar / Eliminar ----------
 function crearTarjeta(juego) {
   const card = document.createElement('article');
   card.className = 'card-juego';
@@ -89,7 +85,6 @@ function crearTarjeta(juego) {
   return card;
 }
 
-// ---------- SELECT ----------
 async function cargarJuegos() {
   const { data, error } = await supabase
     .from('juegos')
@@ -111,7 +106,6 @@ async function cargarJuegos() {
   data.forEach((juego) => grid.appendChild(crearTarjeta(juego)));
 }
 
-// ---------- DELETE ----------
 async function eliminarJuego(id) {
   const confirmacion = confirm('¿Estás seguro de que querés eliminar esta recomendación?');
   if (!confirmacion) return;
@@ -122,7 +116,6 @@ async function eliminarJuego(id) {
 
     mostrarMensaje('Recomendación eliminada con éxito.', 'exito');
 
-    // Si justo se borró el juego que se estaba editando, reseteamos el formulario
     if (inputId.value == id) {
       cancelarEdicion();
     }
@@ -134,7 +127,6 @@ async function eliminarJuego(id) {
   }
 }
 
-// ---------- Preparar el formulario para editar ----------
 async function prepararEdicion(id) {
   try {
     // 1. Buscar los datos actuales del registro
@@ -145,7 +137,6 @@ async function prepararEdicion(id) {
       .single();
     if (error) throw error;
 
-    // 2. Cargarlos en el formulario
     inputId.value = juego.id; // el campo oculto guarda el ID
     document.getElementById('titulo').value = juego.titulo;
     document.getElementById('genero').value = juego.genero;
@@ -154,13 +145,11 @@ async function prepararEdicion(id) {
     document.getElementById('portada').value = juego.portada;
     document.getElementById('porque').value = juego.porque;
 
-    // 3. Avisar al usuario que está editando
     tituloForm.textContent = 'Editar recomendación';
     btnSubmit.textContent = 'Guardar cambios';
     btnCancelar.hidden = false;
     mostrarMensaje('', '');
 
-    // 4. Subir la pantalla hasta el formulario
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
     console.error(err);
@@ -168,7 +157,6 @@ async function prepararEdicion(id) {
   }
 }
 
-// ---------- Volver el formulario al modo "crear" ----------
 function cancelarEdicion() {
   form.reset();
   inputId.value = '';
@@ -182,7 +170,6 @@ btnCancelar.addEventListener('click', () => {
   mostrarMensaje('', '');
 });
 
-// ---------- INSERT o UPDATE según el campo oculto ----------
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -202,19 +189,17 @@ form.addEventListener('submit', async (e) => {
 
   try {
     if (id) {
-      // --- MODO UPDATE ---
       const { error } = await supabase.from('juegos').update(datos).eq('id', id);
       if (error) throw error;
       mostrarMensaje('¡Recomendación actualizada con éxito!', 'exito');
     } else {
-      // --- MODO INSERT ---
       const { error } = await supabase.from('juegos').insert([datos]);
       if (error) throw error;
       mostrarMensaje('¡Recomendación publicada con éxito!', 'exito');
     }
 
-    cancelarEdicion();       // restaura el formulario
-    await cargarJuegos();    // recarga las tarjetas
+    cancelarEdicion();      
+    await cargarJuegos();   
   } catch (err) {
     console.error('Error al guardar:', err);
     mostrarMensaje('No se pudo guardar: ' + err.message, 'error');
@@ -224,5 +209,4 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
-// Al abrir la página, mostrar lo guardado
 cargarJuegos();

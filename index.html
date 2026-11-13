@@ -6,12 +6,12 @@
   <title>GameApp - Recomendaciones</title>
   <link rel="stylesheet" href="style.css">
 
-  <!-- Configuración PWA para Celulares -->
+
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2c3152">
   <meta name="mobile-web-app-capable" content="yes">
 
-  <!-- CDN de Supabase en el navegador -->
+ 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -29,7 +29,7 @@
       <p class="subtitle">Compartí con la comunidad tus juegos favoritos</p>
 
       <form id="form-juego">
-        <!-- Campo oculto: vacío = crear (INSERT), con número = editar (UPDATE) -->
+        
         <input type="hidden" id="juego-id" value="">
 
         <div class="form-group">
@@ -89,7 +89,7 @@
     <p>Proyecto demo de recomendaciones de videojuegos</p>
   </footer>
 
-  <!-- Cliente de Supabase ya configurado -->
+
   <script src="supabaseClient.js"></script>
   <script src="main.js"></script>
 </body>
